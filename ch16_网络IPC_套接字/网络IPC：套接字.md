@@ -118,8 +118,106 @@ struct sockaddr_in6 {
 
 ### 16.3.3 地址查寻
 
+### 16.3.4 将套接字与地址绑定
+
 ```c++
-struct hostent *gethostent(void);
-void sethostent(int stayopen);
-void endhostent(void);
+int bind(int sockfd, const struct sockaddr *addr,
+        socklen_t addrlen);
+
+// 查看套接字信息
+int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+
+// 查看对方套接字信息
+int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+
 ```
+
+### 16.4 建立连接
+
+```c++
+int connect(int sockfd, const struct sockaddr *addr,
+            socklen_t addrlen);
+```
+
+* 面向连接的套接字使用connect连接服务器
+* 面向无连接的套接字也可以使用connect函数，使用后，所有发送报文的目标地址设置为connect调用中指向的地址，且仅能接收来自指定地址的报文。
+
+```c++
+//宣告可以接收连接请求
+int listen(int sockfd, int backlog);
+
+// 等待连接
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+```
+
+## 16.5 数据传输
+
+* read和write可以收发网络套接字，但是功能不完全。
+
+* 发送相关的函数
+
+```c++
+ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+// flags:
+//          MSG_DONTROUTE:  勿将数据路由出本地网络
+//          MSG_DONTWAIT:   允许非阻塞操作(等价于使用O_NONBLOCK)
+//          MSG_EOR:        协议支持表示结束连接
+//          MSG_OOB:        协议支持表示发送带外数据
+```
+
+UDP协议最多send字节数：（65535 - 20（ip报文头部）-8（udp报文头部）
+
+```c++
+// 和send相似，但是可以为发送UDP报文指定一个套接字
+// 对于面向连接的套接字，目标地址是被忽略的
+ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+```
+
+```c++
+ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
+```
+
+* 接收相关的函数
+
+```c++
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+// flags:
+//          MSG_OOB:        接收带外数据
+//          MSG_PEEK:       返回报文内容而不是真正接收报文
+//          MSG_TRUNC:      即使报文被截断也返回的是真实的报文长度
+//          MSG_WAITALL:    等待直到所有的数据可用（仅TCP）（对于recv接收的数据可能比请求len的少）
+
+ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
+                struct sockaddr *src_addr, socklen_t *addrlen);
+
+ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+
+```
+
+## 16.6 套接字选项
+
+```c++
+int getsockopt(int sockfd, int level, int optname,
+                    void *optval, socklen_t *optlen);
+// level: 协议
+//        对于通用选项：SOL_SOCKET，否则协议号：IPPROTO_TCP、IPPROTO_IP等
+
+// val:   开启和关闭该选项
+
+// len:   val的长度
+int setsockopt(int sockfd, int level, int optname,
+                    const void *optval, socklen_t optlen);
+```
+
+1. 通用选项，工作在所有套接字上
+2. 套接字层次管理的选项
+3. 特定某一个协议的选项
+
+常用的选项：
+
+1. 地址重用： `setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val))`
+
+## 16.7 带外数据
+
+

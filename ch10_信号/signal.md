@@ -124,9 +124,9 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 ```
 
 * `int how`
-    SIG_BLOCK
-    SIG_UNBLOCK
-    SIG_SETMASK
+    SIG_BLOCK 阻塞
+    SIG_UNBLOCK 取消阻塞
+    SIG_SETMASK 设置set阻塞集合为新的阻塞集合
 
 * `const sigset_t *set`
     需要处理的信号集
